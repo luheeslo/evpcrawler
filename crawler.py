@@ -19,8 +19,7 @@ def main():
     mensagem = json_response['mensagem']
     if mensagem == 'Acesso liberado. Aguarde...':
         print(mensagem)
-        page = session.get(cursos_url)
-        page = session.get(cursos_url)
+        page = session.get(cursos_url, allow_redirects=False)
         tree = html.fromstring(page.content)
         lis_query = '/html/body/div[1]/section/div/div[2]/div/section/ul/li'
         materias = tree.xpath(lis_query)

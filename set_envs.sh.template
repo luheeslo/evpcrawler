@@ -1,0 +1,2 @@
+export EVP_LOGIN = 'example'
+export EVP_PASSWORD = 'example'

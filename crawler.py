@@ -1,7 +1,8 @@
-import os
 import requests
 from lxml import html
 import json
+from util import download
+
 
 URL = 'https://www.euvoupassar.com.br'
 LOGIN_URL = 'https://www.euvoupassar.com.br/login/index/autenticar'
@@ -60,28 +61,24 @@ class EvpCrawler:
             data_aula = aula.xpath('div/div/@data-aula')[0]
             mp4 = aula.xpath('div/div/a[@class="mp4 baixarMP4 "]')
             pdf = aula.xpath('div/div/a[@class="pdf baixarPDF "]')
-            yield (
-                titulo_aula,
-                data_aula,
+            types = (
                 'mp4' if mp4 else '',
                 'pdf' if pdf else ''
             )
+            yield {
+                'titulo_aula': titulo_aula,
+                'data_aula': data_aula,
+                'types': types
+            }
 
-    def baixarAula(self, data_aula, mp4, pdf, path=''):
-        for type in (mp4, pdf):
-            if type:
-                response = self._session.post(DOWNLOAD_URL + type,
-                                              data={'id': data_aula})
-                json_response = json.loads(response.content.decode('utf-8'))
-                url = json_response['url']
-                response = self._session.get(json_response['url'], stream=True)
-                if response.status_code == 200:
-                    nome_arquivo = url.split('/').pop()
-                    path = os.path.join(path, nome_arquivo)
-                    tamanho_arquivo = int(response.headers['content-length'])
-                    bytes_enviados = 0
-                    with open(path, 'wb') as f:
-                        for chunk in response.iter_content(1024):
-                            f.write(chunk)
-                            bytes_enviados += len(chunk)
-                            yield bytes_enviados, tamanho_arquivo
+    def baixarAula(self, data_aula, type, path=''):
+        response = self._session.post(DOWNLOAD_URL + type,
+                                      data={'id': data_aula})
+
+        json_response = json.loads(response.content.decode('utf-8'))
+        url = json_response['url']
+        response = self._session.get(json_response['url'], stream=True)
+        if response.status_code == 200:
+            nome_arquivo = url.split('/').pop()
+            return download(nome_arquivo, path, response)
+

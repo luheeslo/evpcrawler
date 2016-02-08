@@ -1,8 +1,8 @@
-import requests
-from lxml import html
 import json
+from lxml import html
 from util import download
-
+from util import Session
+from exceptions import LoginException
 
 URL = 'https://www.euvoupassar.com.br'
 LOGIN_URL = 'https://www.euvoupassar.com.br/login/index/autenticar'
@@ -11,19 +11,14 @@ DOWNLOAD_URL = 'https://www.euvoupassar.com.br/application/download/'
 
 
 def login(email, senha):
-    session = requests.session()
-    auth = {
-        'email': email,
-        'senha': senha
-    }
-    response = session.post(LOGIN_URL, data=auth)
-    json_response = json.loads(response.content.decode('utf-8'))
-    mensagem = json_response['mensagem']
+    session, mensagem = Session.login(email, senha, LOGIN_URL)
+    crawler = None
     if mensagem == 'Acesso liberado. Aguarde...':
+        crawler = EvpCrawler(session)
         print(mensagem)
-        return EvpCrawler(session)
     else:
-        print(mensagem)
+        raise LoginException(mensagem)
+    return crawler
 
 
 class EvpCrawler:

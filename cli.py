@@ -3,6 +3,7 @@
 import os
 import sys
 from crawler import login
+from exceptions import LoginException
 
 
 """
@@ -20,49 +21,64 @@ EMAIL = os.getenv('EVP_EMAIL')
 SENHA = os.getenv('EVP_PASSWORD')
 PATH = os.getenv('DOWNLOAD_PATH')
 
-SESSION = login(EMAIL, SENHA)
-
 
 def mostrar_materias(count=-1):
-    crawler = SESSION
-    materias = crawler.materias()
-    for i, materia in enumerate(materias):
-        pos = i + 1
-        print('%d - %s' % (pos, materia[0]))
-        if count == pos:
-            break
+    try:
+        crawler = login(EMAIL, SENHA)
+        materias = crawler.materias()
+        for i, materia in enumerate(materias):
+            pos = i + 1
+            print('%d - %s' % (pos, materia[0]))
+            if count == pos:
+                break
+    except LoginException as e:
+        print(e)
 
 
 def mostrar_cursos(nome_materia, numero_curso=0):
-    crawler = SESSION
-    for i, curso in enumerate(crawler.cursos(nome_materia)):
-        pos = i + 1
-        if numero_curso:
-            if numero_curso == pos:
-                return curso[1]
-        else:
-            print('%d - %s' % (pos, curso[0]))
+    try:
+        crawler = login(EMAIL, SENHA)
+        for i, curso in enumerate(crawler.cursos(nome_materia)):
+            pos = i + 1
+            if numero_curso:
+                if numero_curso == pos:
+                    return curso[1]
+            else:
+                print('%d - %s' % (pos, curso[0]))
+    except LoginException as e:
+        print(e)
 
 
 def mostrar_aulas(url_curso, numero_aula=0):
-    crawler = SESSION
-    aulas = crawler.aulas(url_curso)
-    for i, aula in enumerate(reversed(list(aulas))):
-        pos = i + 1
-        if numero_aula:
-            if numero_aula == pos:
-                return aula['titulo_aula'], aula['data_aula'], aula['types']
-        else:
-            print('%d - %s' % (pos, aula['titulo_aula']))
+    try:
+        crawler = login(EMAIL, SENHA)
+        aulas = crawler.aulas(url_curso)
+        for i, aula in enumerate(reversed(list(aulas))):
+            pos = i + 1
+            if numero_aula:
+                if numero_aula == pos:
+                    return (aula['titulo_aula'],
+                            aula['data_aula'],
+                            aula['types']
+                            )
+            else:
+                print('%d - %s' % (pos, aula['titulo_aula']))
+
+    except LoginException as e:
+        print(e)
 
 
 def baixar_aula(titulo_aula, data_aula, type, path=''):
-    crawler = SESSION
-    for file in crawler.baixarAula(data_aula, type, path=path):
-        p = (file[0] * 100) / file[1]
-        sys.stdout.write('Baixando %s %s %.2f%% \r' % (type, titulo_aula, p))
-        sys.stdout.flush()
-    print('\n')
+    try:
+        crawler = login(EMAIL, SENHA)
+        for file in crawler.baixarAula(data_aula, type, path=path):
+            p = (file[0] * 100) / file[1]
+            sys.stdout.write('Baixando %s %s %.2f%% \r' %
+                             (type, titulo_aula, p))
+            sys.stdout.flush()
+        print('\n')
+    except LoginException as e:
+        print(e)
 
 
 parser = argparse.ArgumentParser(

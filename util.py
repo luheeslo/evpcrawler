@@ -6,6 +6,7 @@ Github: https://github.com/luheeslo
 Description: Module with helper funcions
 """
 import os
+import requests
 
 
 def download(nome_arquivo, path, response):
@@ -26,4 +27,35 @@ def download(nome_arquivo, path, response):
             f.write(chunk)
             bytes_enviados += len(chunk)
             yield bytes_enviados, tamanho_arquivo
+
+
+class Session():
+        __logged = False
+        __email = ''
+        __senha = ''
+        __session = None
+
+        @classmethod
+        def login(cls, email, senha, login_url):
+            if cls.__email == email and cls.__senha == senha:
+                if email == '' and senha == '':
+                    raise Exception('Necessário email e login')
+                return cls.__session, cls.__logged
+            else:
+                cls.__email = email
+                cls.__senha = senha
+                auth = {
+                    'email': email,
+                    'senha': senha
+                }
+
+            cls.__session = requests.session()
+            response = cls.__session.post(login_url, data=auth)
+            json_response = response.json()
+            mensagem = json_response['mensagem']
+            if json_response['mensagem'] == 'Acesso liberado. Aguarde...':
+                cls.__logged = True
+            return cls.__session, mensagem
+
+
 
